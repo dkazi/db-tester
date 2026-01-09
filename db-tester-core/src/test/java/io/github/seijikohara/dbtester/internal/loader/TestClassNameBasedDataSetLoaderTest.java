@@ -16,6 +16,7 @@ import io.github.seijikohara.dbtester.api.config.OperationDefaults;
 import io.github.seijikohara.dbtester.api.config.TableMergeStrategy;
 import io.github.seijikohara.dbtester.api.context.TestContext;
 import io.github.seijikohara.dbtester.api.operation.Operation;
+import java.util.Map;
 import java.util.Set;
 import javax.sql.DataSource;
 import org.junit.jupiter.api.BeforeEach;
@@ -55,7 +56,8 @@ class TestClassNameBasedDataSetLoaderTest {
             DataFormat.CSV,
             TableMergeStrategy.UNION_ALL,
             ConventionSettings.DEFAULT_LOAD_ORDER_FILE_NAME,
-            Set.of());
+            Set.of(),
+            Map.of());
     final var operationDefaults = new OperationDefaults(Operation.CLEAN_INSERT, Operation.NONE);
     final var loader = new TestClassNameBasedDataSetLoader();
     configuration = new Configuration(conventions, operationDefaults, loader);
@@ -388,7 +390,7 @@ class TestClassNameBasedDataSetLoaderTest {
 
     /** Test method with explicit @DataSetSource. */
     @DataSet(
-        dataSets =
+        sources =
             @DataSetSource(
                 resourceLocation =
                     "classpath:io/github/seijikohara/dbtester/internal/loader/TestClassNameBasedDataSetLoaderTest$TestHelperWithExplicitPreparationDataSet/custom-location"))
@@ -402,7 +404,7 @@ class TestClassNameBasedDataSetLoaderTest {
 
     /** Test method with explicit @DataSetSource. */
     @ExpectedDataSet(
-        dataSets =
+        sources =
             @DataSetSource(
                 resourceLocation =
                     "classpath:io/github/seijikohara/dbtester/internal/loader/TestClassNameBasedDataSetLoaderTest$TestHelperWithExplicitExpectationDataSet/custom-location/expected"))
@@ -416,7 +418,7 @@ class TestClassNameBasedDataSetLoaderTest {
 
     /** Test method with multiple @DataSetSource. */
     @DataSet(
-        dataSets = {
+        sources = {
           @DataSetSource(
               resourceLocation =
                   "classpath:io/github/seijikohara/dbtester/internal/loader/TestClassNameBasedDataSetLoaderTest$TestHelperWithMultipleDataSets/dataset1"),
@@ -434,7 +436,7 @@ class TestClassNameBasedDataSetLoaderTest {
 
     /** Test method with scenarioNames. */
     @DataSet(
-        dataSets =
+        sources =
             @DataSetSource(
                 resourceLocation =
                     "classpath:io/github/seijikohara/dbtester/internal/loader/TestClassNameBasedDataSetLoaderTest$TestHelperWithScenarioNames/",
@@ -449,7 +451,7 @@ class TestClassNameBasedDataSetLoaderTest {
 
     /** Test method with dataSourceName. */
     @DataSet(
-        dataSets =
+        sources =
             @DataSetSource(
                 resourceLocation =
                     "classpath:io/github/seijikohara/dbtester/internal/loader/TestClassNameBasedDataSetLoaderTest$TestHelperWithCustomDataSource/",

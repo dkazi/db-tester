@@ -93,6 +93,7 @@ Configures individual dataset parameters within `@DataSet` or `@ExpectedDataSet`
 | `dataSourceName` | `String` | `""` | Named DataSource identifier; empty uses default |
 | `scenarioNames` | `String[]` | `{}` | Scenario filters; empty uses test method name |
 | `excludeColumns` | `String[]` | `{}` | Column names to exclude from verification (case-insensitive); only effective in `@ExpectedDataSet` |
+| `columnStrategies` | `ColumnStrategy[]` | `{}` | Column-specific comparison strategies; only effective in `@ExpectedDataSet` |
 
 **Resource Location Formats**:
 
@@ -119,6 +120,15 @@ void testMultipleScenarios() { }
     excludeColumns = {"CREATED_AT", "UPDATED_AT", "VERSION"}
 ))
 void testWithExcludedColumns() { }
+
+@ExpectedDataSet(sources = @DataSetSource(
+    columnStrategies = {
+        @ColumnStrategy(name = "EMAIL", strategy = Strategy.CASE_INSENSITIVE),
+        @ColumnStrategy(name = "CREATED_AT", strategy = Strategy.IGNORE),
+        @ColumnStrategy(name = "ID", strategy = Strategy.REGEX, pattern = "[a-f0-9-]{36}")
+    }
+))
+void testWithColumnStrategies() { }
 ```
 
 **Column Exclusion Behavior**:
@@ -126,6 +136,46 @@ void testWithExcludedColumns() { }
 - Column names are normalized to uppercase for comparison
 - Per-dataset exclusions are combined with global exclusions from `ConventionSettings`
 - Exclusions apply only to `@ExpectedDataSet` verification, not `@DataSet` preparation
+
+**Column Strategy Behavior**:
+
+- Column strategies override default strict comparison for specific columns
+- Annotation-level strategies override global strategies from `ConventionSettings`
+- Exclusions take precedence: excluded columns are skipped before strategies apply
+
+### @ColumnStrategy
+
+Configures the comparison strategy for a specific column during expectation verification.
+
+**Location**: `io.github.seijikohara.dbtester.api.annotation.ColumnStrategy`
+
+**Target**: None (`@Target({})`) - Use exclusively within `@DataSetSource#columnStrategies()`.
+
+**Attributes**:
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `name` | `String` | (required) | Column name (case-insensitive) |
+| `strategy` | `Strategy` | `STRICT` | Comparison strategy to use |
+| `pattern` | `String` | `""` | Regex pattern for `REGEX` strategy |
+
+### Strategy
+
+Enum defining comparison strategy types for use in `@ColumnStrategy` annotations.
+
+**Location**: `io.github.seijikohara.dbtester.api.annotation.Strategy`
+
+**Values**:
+
+| Value | Description |
+|-------|-------------|
+| `STRICT` | Exact match using `equals()` (default) |
+| `IGNORE` | Skip comparison entirely |
+| `NUMERIC` | Type-aware numeric comparison |
+| `CASE_INSENSITIVE` | Case-insensitive string comparison |
+| `TIMESTAMP_FLEXIBLE` | Converts to UTC and ignores sub-second precision |
+| `NOT_NULL` | Verifies value is not null |
+| `REGEX` | Pattern matching (requires `pattern` attribute) |
 
 ## TableSet Interfaces
 
@@ -320,6 +370,47 @@ Represents database column metadata retrieved from JDBC.
 | `typeName` | `String` | Database-specific type name |
 | `nullable` | `boolean` | Whether column allows null values |
 
+### ColumnStrategyMapping
+
+Represents programmatic column comparison strategy configuration.
+
+**Location**: `io.github.seijikohara.dbtester.api.config.ColumnStrategyMapping`
+
+**Type**: `record`
+
+**Fields**:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `columnName` | `String` | Column name normalized to uppercase |
+| `strategy` | `ComparisonStrategy` | Comparison strategy for this column |
+
+**Factory Methods**:
+
+| Method | Description |
+|--------|-------------|
+| `of(String, ComparisonStrategy)` | Creates mapping with specified strategy |
+| `strict(String)` | Creates mapping with STRICT strategy |
+| `ignore(String)` | Creates mapping with IGNORE strategy |
+| `caseInsensitive(String)` | Creates mapping with CASE_INSENSITIVE strategy |
+| `numeric(String)` | Creates mapping with NUMERIC strategy |
+| `timestampFlexible(String)` | Creates mapping with TIMESTAMP_FLEXIBLE strategy |
+| `notNull(String)` | Creates mapping with NOT_NULL strategy |
+| `regex(String, String)` | Creates mapping with REGEX strategy and pattern |
+
+**Example**:
+
+```java
+// Programmatic column strategy configuration
+var strategies = List.of(
+    ColumnStrategyMapping.ignore("CREATED_AT"),
+    ColumnStrategyMapping.caseInsensitive("EMAIL"),
+    ColumnStrategyMapping.regex("TOKEN", "[a-f0-9-]{36}")
+);
+
+DatabaseAssertion.assertEqualsWithStrategies(expectedTable, actualTable, strategies);
+```
+
 ### ComparisonStrategy
 
 Defines value comparison behavior during assertion.
@@ -377,6 +468,7 @@ Static facade for programmatic database assertions. This utility class delegates
 | `assertEquals(Table, Table, AssertionFailureHandler)` | Asserts tables with custom failure handler |
 | `assertEqualsIgnoreColumns(TableSet, TableSet, String, Collection<String>)` | Asserts table in table sets, ignoring specified columns |
 | `assertEqualsIgnoreColumns(Table, Table, Collection<String>)` | Asserts tables, ignoring specified columns |
+| `assertEqualsWithStrategies(Table, Table, Collection<ColumnStrategyMapping>)` | Asserts tables with column-specific comparison strategies |
 | `assertEqualsByQuery(TableSet, DataSource, String, String, Collection<String>)` | Asserts SQL query results against expected table set |
 | `assertEqualsByQuery(Table, DataSource, String, String, Collection<String>)` | Asserts SQL query results against expected table |
 
@@ -398,6 +490,12 @@ DatabaseAssertion.assertEqualsIgnoreColumns(expectedTableSet, actualTableSet, "U
 
 // Comparing SQL query results
 DatabaseAssertion.assertEqualsByQuery(expectedTableSet, dataSource, "USERS", "SELECT * FROM USERS WHERE status = 'ACTIVE'");
+
+// Using column-specific comparison strategies
+DatabaseAssertion.assertEqualsWithStrategies(expectedTable, actualTable,
+    ColumnStrategyMapping.ignore("CREATED_AT"),
+    ColumnStrategyMapping.caseInsensitive("EMAIL"),
+    ColumnStrategyMapping.regex("TOKEN", "[a-f0-9-]{36}"));
 ```
 
 ### AssertionFailureHandler

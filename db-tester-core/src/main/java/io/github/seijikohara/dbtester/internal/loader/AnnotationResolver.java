@@ -1,19 +1,25 @@
 package io.github.seijikohara.dbtester.internal.loader;
 
+import io.github.seijikohara.dbtester.api.annotation.ColumnStrategy;
 import io.github.seijikohara.dbtester.api.annotation.DataSet;
 import io.github.seijikohara.dbtester.api.annotation.DataSetSource;
 import io.github.seijikohara.dbtester.api.annotation.ExpectedDataSet;
+import io.github.seijikohara.dbtester.api.config.ColumnStrategyMapping;
 import io.github.seijikohara.dbtester.api.domain.DataSourceName;
 import io.github.seijikohara.dbtester.api.scenario.ScenarioName;
 import io.github.seijikohara.dbtester.internal.spi.ScenarioNameResolverRegistry;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Resolves annotation values for database test configurations.
@@ -39,6 +45,9 @@ import java.util.stream.Stream;
  * @see ExpectedDataSet
  */
 public final class AnnotationResolver {
+
+  /** Logger for this class. */
+  private static final Logger logger = LoggerFactory.getLogger(AnnotationResolver.class);
 
   /** Creates a new annotation resolver. */
   public AnnotationResolver() {}
@@ -134,6 +143,47 @@ public final class AnnotationResolver {
         .filter(Predicate.not(String::isEmpty))
         .map(String::toUpperCase)
         .collect(Collectors.toUnmodifiableSet());
+  }
+
+  /**
+   * Resolves column comparison strategies from a {@link DataSetSource} annotation.
+   *
+   * <p>This method extracts column-specific comparison strategies from the annotation. Column names
+   * are normalized to uppercase for case-insensitive matching. The returned map is keyed by
+   * uppercase column name.
+   *
+   * <p>If duplicate column names are found (case-insensitive), a warning is logged and the later
+   * definition takes precedence.
+   *
+   * @param annotation the dataset source annotation
+   * @return map of column names to their comparison strategies
+   */
+  Map<String, ColumnStrategyMapping> resolveColumnStrategies(final DataSetSource annotation) {
+    return Stream.of(annotation.columnStrategies())
+        .collect(
+            Collectors.toUnmodifiableMap(
+                cs -> cs.name().toUpperCase(Locale.ROOT),
+                this::toColumnStrategyMapping,
+                (existing, replacement) -> {
+                  logger.warn(
+                      "Duplicate column strategy for '{}'. Using the later definition with "
+                          + "strategy: {}. Previous strategy was: {}",
+                      replacement.columnName(),
+                      replacement.strategy(),
+                      existing.strategy());
+                  return replacement;
+                }));
+  }
+
+  /**
+   * Converts a {@link ColumnStrategy} annotation to a {@link ColumnStrategyMapping}.
+   *
+   * @param columnStrategy the column strategy annotation
+   * @return the corresponding ColumnStrategyMapping
+   */
+  private ColumnStrategyMapping toColumnStrategyMapping(final ColumnStrategy columnStrategy) {
+    final var strategy = columnStrategy.strategy().toComparisonStrategy(columnStrategy.pattern());
+    return ColumnStrategyMapping.of(columnStrategy.name(), strategy);
   }
 
   /**

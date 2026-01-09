@@ -85,7 +85,8 @@ class DataFormatSpec extends Specification {
 					DataFormat.CSV, // CSV format
 					TableMergeStrategy.UNION_ALL,
 					ConventionSettings.DEFAULT_LOAD_ORDER_FILE_NAME,
-					Set.of()
+					Set.of(),
+					Map.of()
 					)
 					)
 		}
@@ -115,14 +116,14 @@ class DataFormatSpec extends Specification {
 		 */
 		@DataSet(
 		operation = Operation.INSERT,
-		dataSets = [
+		sources = [
 			@DataSetSource(
 			resourceLocation = 'classpath:example/feature/DataFormatSpec$CsvFormatSpec/should load CSV format data/'
 			)
 		]
 		)
 		@ExpectedDataSet(
-		dataSets = [
+		sources = [
 			@DataSetSource(
 			resourceLocation = 'classpath:example/feature/DataFormatSpec$CsvFormatSpec/should load CSV format data/expected/'
 			)
@@ -206,7 +207,8 @@ class DataFormatSpec extends Specification {
 					DataFormat.TSV, // TSV format
 					TableMergeStrategy.UNION_ALL,
 					ConventionSettings.DEFAULT_LOAD_ORDER_FILE_NAME,
-					Set.of()
+					Set.of(),
+					Map.of()
 					)
 					)
 		}
@@ -236,14 +238,14 @@ class DataFormatSpec extends Specification {
 		 */
 		@DataSet(
 		operation = Operation.INSERT,
-		dataSets = [
+		sources = [
 			@DataSetSource(
 			resourceLocation = 'classpath:example/feature/DataFormatSpec$TsvFormatSpec/should load TSV format data/'
 			)
 		]
 		)
 		@ExpectedDataSet(
-		dataSets = [
+		sources = [
 			@DataSetSource(
 			resourceLocation = 'classpath:example/feature/DataFormatSpec$TsvFormatSpec/should load TSV format data/expected/'
 			)
