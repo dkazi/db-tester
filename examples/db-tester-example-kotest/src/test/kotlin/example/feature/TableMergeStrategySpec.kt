@@ -44,23 +44,26 @@ class FirstStrategySpec : AnnotationSpec() {
         private val logger = LoggerFactory.getLogger(FirstStrategySpec::class.java)
 
         private val sharedConfiguration: Configuration =
-            Configuration.withConventions(
-                ConventionSettings(
-                    null,
-                    "/expected",
-                    "[Scenario]",
-                    DataFormat.CSV,
-                    TableMergeStrategy.FIRST,
-                    ConventionSettings.DEFAULT_LOAD_ORDER_FILE_NAME,
-                    emptySet(),
-                    emptyMap(),
-                    RowOrdering.ORDERED,
-                    null,
-                    0,
-                    Duration.ofMillis(100),
-                    TransactionMode.SINGLE_TRANSACTION,
-                ),
-            )
+            Configuration
+                .builder()
+                .conventions(
+                    ConventionSettings
+                        .builder()
+                        .baseDirectory(null)
+                        .expectationSuffix("/expected")
+                        .scenarioMarker("[Scenario]")
+                        .dataFormat(DataFormat.CSV)
+                        .tableMergeStrategy(TableMergeStrategy.FIRST)
+                        .loadOrderFileName(ConventionSettings.DEFAULT_LOAD_ORDER_FILE_NAME)
+                        .globalExcludeColumns(emptySet())
+                        .globalColumnStrategies(emptyMap())
+                        .rowOrdering(RowOrdering.ORDERED)
+                        .queryTimeout(null)
+                        .retryCount(0)
+                        .retryDelay(Duration.ofMillis(100))
+                        .transactionMode(TransactionMode.SINGLE_TRANSACTION)
+                        .build(),
+                ).build()
 
         private fun createDataSource(): DataSource =
             JdbcDataSource().apply {
@@ -167,23 +170,26 @@ class LastStrategySpec : AnnotationSpec() {
         private val logger = LoggerFactory.getLogger(LastStrategySpec::class.java)
 
         private val sharedConfiguration: Configuration =
-            Configuration.withConventions(
-                ConventionSettings(
-                    null,
-                    "/expected",
-                    "[Scenario]",
-                    DataFormat.CSV,
-                    TableMergeStrategy.LAST,
-                    ConventionSettings.DEFAULT_LOAD_ORDER_FILE_NAME,
-                    emptySet(),
-                    emptyMap(),
-                    RowOrdering.ORDERED,
-                    null,
-                    0,
-                    Duration.ofMillis(100),
-                    TransactionMode.SINGLE_TRANSACTION,
-                ),
-            )
+            Configuration
+                .builder()
+                .conventions(
+                    ConventionSettings
+                        .builder()
+                        .baseDirectory(null)
+                        .expectationSuffix("/expected")
+                        .scenarioMarker("[Scenario]")
+                        .dataFormat(DataFormat.CSV)
+                        .tableMergeStrategy(TableMergeStrategy.LAST)
+                        .loadOrderFileName(ConventionSettings.DEFAULT_LOAD_ORDER_FILE_NAME)
+                        .globalExcludeColumns(emptySet())
+                        .globalColumnStrategies(emptyMap())
+                        .rowOrdering(RowOrdering.ORDERED)
+                        .queryTimeout(null)
+                        .retryCount(0)
+                        .retryDelay(Duration.ofMillis(100))
+                        .transactionMode(TransactionMode.SINGLE_TRANSACTION)
+                        .build(),
+                ).build()
 
         private fun createDataSource(): DataSource =
             JdbcDataSource().apply {
@@ -286,23 +292,26 @@ class UnionStrategySpec : AnnotationSpec() {
         private val logger = LoggerFactory.getLogger(UnionStrategySpec::class.java)
 
         private val sharedConfiguration: Configuration =
-            Configuration.withConventions(
-                ConventionSettings(
-                    null,
-                    "/expected",
-                    "[Scenario]",
-                    DataFormat.CSV,
-                    TableMergeStrategy.UNION,
-                    ConventionSettings.DEFAULT_LOAD_ORDER_FILE_NAME,
-                    emptySet(),
-                    emptyMap(),
-                    RowOrdering.ORDERED,
-                    null,
-                    0,
-                    Duration.ofMillis(100),
-                    TransactionMode.SINGLE_TRANSACTION,
-                ),
-            )
+            Configuration
+                .builder()
+                .conventions(
+                    ConventionSettings
+                        .builder()
+                        .baseDirectory(null)
+                        .expectationSuffix("/expected")
+                        .scenarioMarker("[Scenario]")
+                        .dataFormat(DataFormat.CSV)
+                        .tableMergeStrategy(TableMergeStrategy.UNION)
+                        .loadOrderFileName(ConventionSettings.DEFAULT_LOAD_ORDER_FILE_NAME)
+                        .globalExcludeColumns(emptySet())
+                        .globalColumnStrategies(emptyMap())
+                        .rowOrdering(RowOrdering.ORDERED)
+                        .queryTimeout(null)
+                        .retryCount(0)
+                        .retryDelay(Duration.ofMillis(100))
+                        .transactionMode(TransactionMode.SINGLE_TRANSACTION)
+                        .build(),
+                ).build()
 
         private fun createDataSource(): DataSource =
             JdbcDataSource().apply {
@@ -409,23 +418,26 @@ class UnionAllStrategySpec : AnnotationSpec() {
         private val logger = LoggerFactory.getLogger(UnionAllStrategySpec::class.java)
 
         private val sharedConfiguration: Configuration =
-            Configuration.withConventions(
-                ConventionSettings(
-                    null,
-                    "/expected",
-                    "[Scenario]",
-                    DataFormat.CSV,
-                    TableMergeStrategy.UNION_ALL,
-                    ConventionSettings.DEFAULT_LOAD_ORDER_FILE_NAME,
-                    emptySet(),
-                    emptyMap(),
-                    RowOrdering.ORDERED,
-                    null,
-                    0,
-                    Duration.ofMillis(100),
-                    TransactionMode.SINGLE_TRANSACTION,
-                ),
-            )
+            Configuration
+                .builder()
+                .conventions(
+                    ConventionSettings
+                        .builder()
+                        .baseDirectory(null)
+                        .expectationSuffix("/expected")
+                        .scenarioMarker("[Scenario]")
+                        .dataFormat(DataFormat.CSV)
+                        .tableMergeStrategy(TableMergeStrategy.UNION_ALL)
+                        .loadOrderFileName(ConventionSettings.DEFAULT_LOAD_ORDER_FILE_NAME)
+                        .globalExcludeColumns(emptySet())
+                        .globalColumnStrategies(emptyMap())
+                        .rowOrdering(RowOrdering.ORDERED)
+                        .queryTimeout(null)
+                        .retryCount(0)
+                        .retryDelay(Duration.ofMillis(100))
+                        .transactionMode(TransactionMode.SINGLE_TRANSACTION)
+                        .build(),
+                ).build()
 
         private fun createDataSource(): DataSource =
             JdbcDataSource().apply {

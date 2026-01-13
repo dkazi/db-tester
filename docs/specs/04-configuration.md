@@ -8,7 +8,7 @@ Aggregates runtime configuration for the database testing extension.
 
 **Location**: `io.github.seijikohara.dbtester.api.config.Configuration`
 
-**Type**: `record`
+**Type**: `final class` with builder pattern
 
 ### Components
 
@@ -16,16 +16,29 @@ Aggregates runtime configuration for the database testing extension.
 |-----------|------|-------------|
 | `conventions` | `ConventionSettings` | Dataset directory resolution rules |
 | `operations` | `OperationDefaults` | Default database operations |
-| `loader` | `TableSetLoader` | Dataset loading strategy |
+| `loader` | `DataSetLoader` | Dataset loading strategy |
 
 ### Factory Methods
 
 | Method | Description |
 |--------|-------------|
+| `builder()` | Creates a new builder for constructing Configuration instances |
 | `defaults()` | Creates configuration with all framework defaults |
-| `withConventions(ConventionSettings)` | Custom conventions with default operations and loader |
-| `withOperations(OperationDefaults)` | Custom operations with default conventions and loader |
-| `withLoader(TableSetLoader)` | Custom loader with default conventions and operations |
+
+### Instance Methods
+
+| Method | Description |
+|--------|-------------|
+| `toBuilder()` | Creates a new builder initialized with values from this instance |
+
+### Builder Methods
+
+| Method | Description |
+|--------|-------------|
+| `conventions(ConventionSettings)` | Sets the resolution rules for locating datasets |
+| `operations(OperationDefaults)` | Sets the default database operations |
+| `loader(DataSetLoader)` | Sets the strategy for constructing datasets |
+| `build()` | Builds a new Configuration instance |
 
 ### Default Behavior
 
@@ -33,17 +46,32 @@ When `Configuration.defaults()` is used:
 
 1. Conventions: `ConventionSettings.standard()`
 2. Operations: `OperationDefaults.standard()`
-3. Loader: Loaded via ServiceLoader from `TableSetLoaderProvider`
+3. Loader: Loaded via ServiceLoader from `DataSetLoaderProvider`
 
 ### Usage Example
 
 ```java
+// Using defaults
+var config = Configuration.defaults();
+
+// Customizing with builder
+var config = Configuration.builder()
+    .conventions(ConventionSettings.builder()
+        .dataFormat(DataFormat.TSV)
+        .build())
+    .operations(OperationDefaults.builder()
+        .preparation(Operation.TRUNCATE_INSERT)
+        .build())
+    .build();
+
 // JUnit example - customize configuration in @BeforeAll
 @BeforeAll
 static void setup(ExtensionContext context) {
-    var conventions = ConventionSettings.standard()
-        .withDataFormat(DataFormat.TSV);
-    var config = Configuration.withConventions(conventions);
+    var config = Configuration.builder()
+        .conventions(ConventionSettings.builder()
+            .dataFormat(DataFormat.TSV)
+            .build())
+        .build();
     DatabaseTestExtension.setConfiguration(context, config);
 }
 ```
@@ -54,14 +82,14 @@ Defines naming conventions for dataset discovery and scenario filtering.
 
 **Location**: `io.github.seijikohara.dbtester.api.config.ConventionSettings`
 
-**Type**: `record`
+**Type**: `final class` with builder pattern
 
 ### Fields
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
 | `baseDirectory` | `@Nullable String` | `null` | Absolute or relative base path; null for classpath-relative |
-| `expectedDataSetSuffix` | `String` | `"/expected"` | Subdirectory for expected datasets |
+| `expectationSuffix` | `String` | `"/expected"` | Subdirectory for expected datasets |
 | `scenarioMarker` | `String` | `"[Scenario]"` | Column name for scenario filtering |
 | `dataFormat` | `DataFormat` | `CSV` | File format for dataset files |
 | `tableMergeStrategy` | `TableMergeStrategy` | `UNION_ALL` | Strategy for merging duplicate tables |
@@ -78,7 +106,38 @@ Defines naming conventions for dataset discovery and scenario filtering.
 
 | Method | Description |
 |--------|-------------|
+| `builder()` | Creates a new builder for constructing ConventionSettings instances |
 | `standard()` | Creates settings with all defaults |
+
+### Instance Methods
+
+| Method | Description |
+|--------|-------------|
+| `toBuilder()` | Creates a new builder initialized with values from this instance |
+
+### Builder Methods
+
+| Method | Description |
+|--------|-------------|
+| `baseDirectory(String)` | Sets the base directory (null for classpath-relative) |
+| `expectationSuffix(String)` | Sets the expectation suffix |
+| `scenarioMarker(String)` | Sets the scenario marker |
+| `dataFormat(DataFormat)` | Sets the data format |
+| `tableMergeStrategy(TableMergeStrategy)` | Sets the merge strategy |
+| `loadOrderFileName(String)` | Sets the load order file name |
+| `globalExcludeColumns(Set<String>)` | Sets the global exclude columns |
+| `globalColumnStrategies(Map<String, ColumnStrategyMapping>)` | Sets the global column strategies |
+| `rowOrdering(RowOrdering)` | Sets the row ordering strategy |
+| `queryTimeout(Duration)` | Sets the query timeout (null for no timeout) |
+| `retryCount(int)` | Sets the retry count |
+| `retryDelay(Duration)` | Sets the retry delay |
+| `transactionMode(TransactionMode)` | Sets the transaction mode |
+| `build()` | Builds a new ConventionSettings instance |
+
+### With Methods (Fluent Copy)
+
+| Method | Description |
+|--------|-------------|
 | `withBaseDirectory(String)` | Creates copy with specified base directory (null for classpath-relative) |
 | `withExpectationSuffix(String)` | Creates copy with specified expectation suffix |
 | `withScenarioMarker(String)` | Creates copy with specified scenario marker |
@@ -132,19 +191,20 @@ The `expectedDataSetSuffix` is appended to the data set path:
 
 ```java
 // Configure retry, timeout, and unordered comparison
-var settings = ConventionSettings.standard()
-    .withRowOrdering(RowOrdering.UNORDERED)
-    .withQueryTimeout(Duration.ofSeconds(30))
-    .withRetryCount(3)
-    .withRetryDelay(Duration.ofMillis(500))
-    .withTransactionMode(TransactionMode.AUTO_COMMIT)
-    .withGlobalExcludeColumns(Set.of("CREATED_AT", "UPDATED_AT"))
-    .withGlobalColumnStrategies(Map.of(
-        "EMAIL", ColumnStrategyMapping.caseInsensitive("EMAIL"),
-        "VERSION", ColumnStrategyMapping.ignore("VERSION")
-    ));
-
-var config = Configuration.withConventions(settings);
+var config = Configuration.builder()
+    .conventions(ConventionSettings.builder()
+        .rowOrdering(RowOrdering.UNORDERED)
+        .queryTimeout(Duration.ofSeconds(30))
+        .retryCount(3)
+        .retryDelay(Duration.ofMillis(500))
+        .transactionMode(TransactionMode.AUTO_COMMIT)
+        .globalExcludeColumns(Set.of("CREATED_AT", "UPDATED_AT"))
+        .globalColumnStrategies(Map.of(
+            "EMAIL", ColumnStrategyMapping.caseInsensitive("EMAIL"),
+            "VERSION", ColumnStrategyMapping.ignore("VERSION")
+        ))
+        .build())
+    .build();
 ```
 
 ## DataSourceRegistry
@@ -217,20 +277,42 @@ Defines default database operations for preparation and expectation phases.
 
 **Location**: `io.github.seijikohara.dbtester.api.config.OperationDefaults`
 
-**Type**: `record`
+**Type**: `final class` with builder pattern
 
 ### Fields
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `dataSet` | `Operation` | `CLEAN_INSERT` | Default operation executed before test runs |
-| `expectedDataSet` | `Operation` | `NONE` | Default operation executed after test completes |
+| `preparation` | `Operation` | `CLEAN_INSERT` | Default operation executed before test runs |
+| `expectation` | `Operation` | `NONE` | Default operation executed after test completes |
 
 ### Factory Methods
 
 | Method | Description |
 |--------|-------------|
-| `standard()` | Creates defaults with `CLEAN_INSERT` for data set and `NONE` for expected data set |
+| `builder()` | Creates a new builder for constructing OperationDefaults instances |
+| `standard()` | Creates defaults with `CLEAN_INSERT` for preparation and `NONE` for expectation |
+
+### Instance Methods
+
+| Method | Description |
+|--------|-------------|
+| `toBuilder()` | Creates a new builder initialized with values from this instance |
+
+### Builder Methods
+
+| Method | Description |
+|--------|-------------|
+| `preparation(Operation)` | Sets the default operation for preparation phase |
+| `expectation(Operation)` | Sets the default operation for expectation phase |
+| `build()` | Builds a new OperationDefaults instance |
+
+### With Methods (Fluent Copy)
+
+| Method | Description |
+|--------|-------------|
+| `withPreparation(Operation)` | Creates copy with specified preparation operation |
+| `withExpectation(Operation)` | Creates copy with specified expectation operation |
 
 ## DataFormat
 
@@ -364,9 +446,11 @@ Defines transaction behavior for database operations.
 ### Configuration Example
 
 ```java
-var settings = ConventionSettings.standard()
-    .withTransactionMode(TransactionMode.AUTO_COMMIT);
-var config = Configuration.withConventions(settings);
+var config = Configuration.builder()
+    .conventions(ConventionSettings.builder()
+        .transactionMode(TransactionMode.AUTO_COMMIT)
+        .build())
+    .build();
 ```
 
 ### Rollback Behavior
@@ -402,6 +486,12 @@ Immutable snapshot of test execution context.
 
 ```java
 // Created by framework extensions
+var configuration = Configuration.builder()
+    .conventions(ConventionSettings.standard())
+    .operations(OperationDefaults.standard())
+    .loader(loader)
+    .build();
+
 TestContext context = new TestContext(
     testClass,
     testMethod,
@@ -410,7 +500,7 @@ TestContext context = new TestContext(
 );
 
 // Used by loaders and executors
-List<TableSet> tableSets = loader.loadDataSetTableSets(context);
+List<TableSet> tableSets = loader.loadPreparationDataSets(context);
 ```
 
 ## Related Specifications

@@ -54,24 +54,29 @@ class DbTesterSpockAutoConfiguration {
 		def conventionProps = properties.convention
 		def operationProps = properties.operation
 
-		def conventions = ConventionSettings.standard()
-				.withBaseDirectory(conventionProps.baseDirectory)
-				.withExpectationSuffix(conventionProps.expectationSuffix)
-				.withScenarioMarker(conventionProps.scenarioMarker)
-				.withDataFormat(conventionProps.dataFormat)
-				.withTableMergeStrategy(conventionProps.tableMergeStrategy)
-				.withLoadOrderFileName(conventionProps.loadOrderFileName)
-				.withGlobalExcludeColumns(conventionProps.globalExcludeColumns)
-				.withGlobalColumnStrategies(Map.of())
+		def conventions = ConventionSettings.builder()
+				.baseDirectory(conventionProps.baseDirectory)
+				.expectationSuffix(conventionProps.expectationSuffix)
+				.scenarioMarker(conventionProps.scenarioMarker)
+				.dataFormat(conventionProps.dataFormat)
+				.tableMergeStrategy(conventionProps.tableMergeStrategy)
+				.loadOrderFileName(conventionProps.loadOrderFileName)
+				.globalExcludeColumns(conventionProps.globalExcludeColumns)
+				.globalColumnStrategies(Map.of())
+				.build()
 
-		def operations = new OperationDefaults(
-				operationProps.preparation,
-				operationProps.expectation
-				)
+		def operations = OperationDefaults.builder()
+				.preparation(operationProps.preparation)
+				.expectation(operationProps.expectation)
+				.build()
 
 		def loader = loadDataSetLoader()
 
-		return new Configuration(conventions, operations, loader)
+		return Configuration.builder()
+				.conventions(conventions)
+				.operations(operations)
+				.loader(loader)
+				.build()
 	}
 
 	/**

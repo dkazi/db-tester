@@ -75,22 +75,30 @@ public class DbTesterJUnitAutoConfiguration {
     final Map<String, ColumnStrategyMapping> globalColumnStrategies = Map.of();
 
     final ConventionSettings conventions =
-        ConventionSettings.standard()
-            .withBaseDirectory(conventionProps.getBaseDirectory())
-            .withExpectationSuffix(conventionProps.getExpectationSuffix())
-            .withScenarioMarker(conventionProps.getScenarioMarker())
-            .withDataFormat(conventionProps.getDataFormat())
-            .withTableMergeStrategy(conventionProps.getTableMergeStrategy())
-            .withLoadOrderFileName(conventionProps.getLoadOrderFileName())
-            .withGlobalExcludeColumns(conventionProps.getGlobalExcludeColumns())
-            .withGlobalColumnStrategies(globalColumnStrategies);
+        ConventionSettings.builder()
+            .baseDirectory(conventionProps.getBaseDirectory())
+            .expectationSuffix(conventionProps.getExpectationSuffix())
+            .scenarioMarker(conventionProps.getScenarioMarker())
+            .dataFormat(conventionProps.getDataFormat())
+            .tableMergeStrategy(conventionProps.getTableMergeStrategy())
+            .loadOrderFileName(conventionProps.getLoadOrderFileName())
+            .globalExcludeColumns(conventionProps.getGlobalExcludeColumns())
+            .globalColumnStrategies(globalColumnStrategies)
+            .build();
 
     final OperationDefaults operations =
-        new OperationDefaults(operationProps.getPreparation(), operationProps.getExpectation());
+        OperationDefaults.builder()
+            .preparation(operationProps.getPreparation())
+            .expectation(operationProps.getExpectation())
+            .build();
 
     final DataSetLoader loader = loadDataSetLoader();
 
-    return new Configuration(conventions, operations, loader);
+    return Configuration.builder()
+        .conventions(conventions)
+        .operations(operations)
+        .loader(loader)
+        .build();
   }
 
   /**

@@ -56,30 +56,40 @@ class DbTesterKotestAutoConfiguration {
         properties.convention
             .let { conventionProps ->
                 ConventionSettings
-                    .standard()
-                    .withBaseDirectory(conventionProps.baseDirectory)
-                    .withExpectationSuffix(conventionProps.expectationSuffix)
-                    .withScenarioMarker(conventionProps.scenarioMarker)
-                    .withDataFormat(conventionProps.dataFormat)
-                    .withTableMergeStrategy(conventionProps.tableMergeStrategy)
-                    .withLoadOrderFileName(conventionProps.loadOrderFileName)
-                    .withGlobalExcludeColumns(conventionProps.globalExcludeColumns)
-                    .withGlobalColumnStrategies(emptyMap())
+                    .builder()
+                    .baseDirectory(conventionProps.baseDirectory)
+                    .expectationSuffix(conventionProps.expectationSuffix)
+                    .scenarioMarker(conventionProps.scenarioMarker)
+                    .dataFormat(conventionProps.dataFormat)
+                    .tableMergeStrategy(conventionProps.tableMergeStrategy)
+                    .loadOrderFileName(conventionProps.loadOrderFileName)
+                    .globalExcludeColumns(conventionProps.globalExcludeColumns)
+                    .globalColumnStrategies(emptyMap())
+                    .build()
             }.let { conventions ->
-                OperationDefaults(
-                    properties.operation.preparation,
-                    properties.operation.expectation,
-                ).let { operations ->
-                    ServiceLoader
-                        .load(DataSetLoaderProvider::class.java)
-                        .findFirst()
-                        .map { it.loader }
-                        .orElseThrow {
-                            IllegalStateException(
-                                "No DataSetLoaderProvider implementation found. Add db-tester-core to your classpath.",
-                            )
-                        }.let { loader -> Configuration(conventions, operations, loader) }
-                }
+                OperationDefaults
+                    .builder()
+                    .preparation(properties.operation.preparation)
+                    .expectation(properties.operation.expectation)
+                    .build()
+                    .let { operations ->
+                        ServiceLoader
+                            .load(DataSetLoaderProvider::class.java)
+                            .findFirst()
+                            .map { it.loader }
+                            .orElseThrow {
+                                IllegalStateException(
+                                    "No DataSetLoaderProvider implementation found. Add db-tester-core to your classpath.",
+                                )
+                            }.let { loader ->
+                                Configuration
+                                    .builder()
+                                    .conventions(conventions)
+                                    .operations(operations)
+                                    .loader(loader)
+                                    .build()
+                            }
+                    }
             }
 
     /**
