@@ -55,12 +55,20 @@ public class DataSetComparator {
   /** Pattern for matching trailing zeros in timestamps. */
   private static final Pattern TRAILING_ZEROS_PATTERN = Pattern.compile("\\.0+$");
 
-    private final OperationDefaults operationDefaults;
+  private final OperationDefaults operationDefaults;
 
-  /** Creates a new dataset comparator. */
+  /**
+   * Creates a new dataset comparator with the specified operation defaults.
+   *
+   * @param operationDefaults the operation defaults to use
+   */
+  public DataSetComparator(OperationDefaults operationDefaults) {
+    this.operationDefaults = Objects.requireNonNull(operationDefaults, "operationDefaults");
+  }
+
+  /** Creates a new dataset comparator with standard operation defaults. */
   public DataSetComparator() {
-    // Default constructor
-      this.operationDefaults = OperationDefaults.standard();
+    this(OperationDefaults.standard());
   }
 
   /**
